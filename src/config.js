@@ -1,5 +1,8 @@
+const w = window.innerWidth * window.devicePixelRatio
+const h = window.innerHeight * window.devicePixelRatio
+
 export default {
-  gameWidth: 760,
-  gameHeight: 400,
-  localStorageName: 'phaseres6webpack'
+  gameWidth: w,
+  gameHeight: h,
+  localStorageName: 'TrumpVsMexicans'
 }

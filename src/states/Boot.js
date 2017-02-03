@@ -1,36 +1,59 @@
-import Phaser from 'phaser'
-import WebFont from 'webfontloader'
+import Phaser from 'phaser';
+import transitions from 'phaser-state-transition'
+import WebFont from 'webfontloader';
 
 export default class extends Phaser.State {
   init () {
-    this.stage.backgroundColor = '#EDEEC9'
-    this.fontsReady = false
-    this.fontsLoaded = this.fontsLoaded.bind(this)
+    this.stage.backgroundColor = '#EDEEC9';
+    this.fontsReady = false;
+    this.assetsReady = false;
+    this.fontsLoaded = this.fontsLoaded.bind(this);
   }
 
-  preload () {
+  preload() {
     WebFont.load({
       google: {
-        families: ['Bangers']
+        families: ['Bangers'],
       },
-      active: this.fontsLoaded
-    })
+      active: this.fontsLoaded,
+    });
 
-    let text = this.add.text(this.world.centerX, this.world.centerY, 'loading fonts', { font: '16px Arial', fill: '#dddddd', align: 'center' })
-    text.anchor.setTo(0.5, 0.5)
+    this.load.image('trump', './assets/images/trump.png');
+    this.load.image('map', './assets/images/map.jpg');
+    this.load.image('background', './assets/images/background.jpg');
+    this.load.image('vjoy_base', './assets/images/base.png');
+    this.load.image('vjoy_cap', './assets/images/cap.png');
+    this.load.image('shoot', './assets/images/shootBtn.png');
+    this.load.image('bullet', './assets/images/troll.png');
 
-    this.load.image('loaderBg', './assets/images/loader-bg.png')
-    this.load.image('loaderBar', './assets/images/loader-bar.png')
+    this.load.onLoadComplete.add(this.assetsLoaded, this);
   }
 
-  render () {
-    if (this.fontsReady) {
-      this.state.start('Splash')
+  create() {
+    // добавление спрайтов на игровое поле
+    this.background = this.add.sprite(0, 0, 'background');
+    this.background.height = this.game.height;
+    this.background.width = this.game.width;
+
+    this.trumpLogo = this.add.sprite(this.world.centerX, this.world.centerY, 'trump');
+    this.trumpLogo.scale.setTo(0.5);
+    this.trumpLogo.anchor.setTo(0.5);
+  }
+
+  update() {
+    this.trumpLogo.angle += 5;
+
+    if (this.fontsReady && this.assetsReady) {
+      this.state.start('Splash');
     }
   }
 
-  fontsLoaded () {
-    this.fontsReady = true
+  fontsLoaded() {
+    this.fontsReady = true;
+  }
+
+  assetsLoaded() {
+    this.assetsReady = true;
   }
 
 }

@@ -10,11 +10,11 @@ export default class extends Phaser.Sprite {
 
     this.game.physics.arcade.enable(this);
     this.enableBody = true;
+
+    this.flyToTarget();
   }
 
-  // update() {
-  //   if (game.input.activePointer.isDown){
-  //     this.game.physics.arcade.moveToPointer(this, 300);
-  //   }
-  // }
+  flyToTarget() {
+    this.game.physics.arcade.moveToPointer(this, this.velocity);
+  }
 }

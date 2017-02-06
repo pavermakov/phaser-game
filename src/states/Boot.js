@@ -35,6 +35,8 @@ export default class extends Phaser.State {
     this.background.height = this.game.height;
     this.background.width = this.game.width;
 
+    this.input.maxPointers = 2;
+
     this.trumpLogo = this.add.sprite(this.world.centerX, this.world.centerY, 'trump');
     this.trumpLogo.scale.setTo(0.5);
     this.trumpLogo.anchor.setTo(0.5);

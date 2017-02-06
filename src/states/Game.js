@@ -2,33 +2,29 @@
 import Phaser from 'phaser';
 import Trump from '../sprites/Trump';
 import Bullet from '../sprites/Bullet';
+import Joystick from '../sprites/Joystick';
 
 export default class extends Phaser.State {
   init() {
     this.game.physics.startSystem(Phaser.Physics.ARCADE);
     this.game.world.setBounds(-2000, -2000, 2000, 2000);
-    this.game.inputEnabled = true;
-
-    if(!Phaser.Device.desktop){
-      this.vjoy = this.game.plugins.add(Phaser.Plugin.VJoy);
-    }
+    this.game.input.addPointer();
   }
 
   create() {
     this.addMap();
+    this.addControls();
     this.addPlayer();
     this.addBullets();
-    this.addControls();
-  }
-
-  update() {
-
   }
 
   addMap() {
     this.map = this.add.sprite(this.game.world.centerX, this.game.world.centerY, 'map');
     this.map.anchor.setTo(0.5);
     this.map.scale.setTo(1.5);
+    this.map.inputEnabled = true;
+
+    this.map.events.onInputDown.add(this.shoot, this);
   }
 
   addPlayer() {
@@ -48,11 +44,16 @@ export default class extends Phaser.State {
   }
 
   addControls() {
-    if(this.vjoy) {
-      this.vjoy.inputEnable(0, 0);
-    }
+    if(!Phaser.Device.desktop){
+      this.joystick = new Joystick({
+        game: this,
+        x: 0,
+        y: 0,
+        asset: 'vjoy_cap',
+      });
 
-    this.game.input.onDown.add(this.shoot, this);
+      this.game.add.existing(this.joystick);
+    }
   }
 
   shoot() {

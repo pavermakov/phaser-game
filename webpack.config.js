@@ -7,7 +7,6 @@ var phaserModule = path.join(__dirname, '/node_modules/phaser-ce/');
 var phaser = path.join(phaserModule, 'build/custom/phaser-split.js');
 var pixi = path.join(phaserModule, 'build/custom/pixi.js');
 var p2 = path.join(phaserModule, 'build/custom/p2.js');
-var vjoy = path.join(__dirname, 'src/vendor/vjoy.js');
 
 var definePlugin = new webpack.DefinePlugin({
   __DEV__: JSON.stringify(JSON.parse(process.env.BUILD_DEV || 'true'))
@@ -17,7 +16,6 @@ module.exports = {
   entry: {
     app: [
       'babel-polyfill',
-      vjoy,
       path.resolve(__dirname, 'src/main.js'),
     ],
     vendor: ['pixi', 'p2', 'phaser', 'webfontloader'],

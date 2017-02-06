@@ -15,7 +15,7 @@ export default class extends Phaser.Sprite {
     if(Phaser.Device.desktop){
       this.cursors = this.game.input.keyboard.createCursorKeys();
     } else {
-      this.cursors = this.game.vjoy.cursors;
+      this.cursors = this.game.joystick.cursors;
     }
   }
 

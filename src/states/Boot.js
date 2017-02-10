@@ -1,10 +1,13 @@
 import Phaser from 'phaser';
-import transitions from 'phaser-state-transition'
 import WebFont from 'webfontloader';
 
 export default class extends Phaser.State {
   init () {
-    this.stage.backgroundColor = '#EDEEC9';
+    this.stage.backgroundColor = 'black';
+    this.game.physics.startSystem(Phaser.Physics.ARCADE);
+    this.game.physics.setBoundsToWorld();
+    this.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
+
     this.fontsReady = false;
     this.assetsReady = false;
     this.fontsLoaded = this.fontsLoaded.bind(this);
@@ -18,35 +21,18 @@ export default class extends Phaser.State {
       active: this.fontsLoaded,
     });
 
-    this.load.image('trump', './assets/images/trump.png');
-    this.load.image('map', './assets/images/map.jpg');
-    this.load.image('background', './assets/images/background.jpg');
-    this.load.image('vjoy_base', './assets/images/base.png');
-    this.load.image('vjoy_cap', './assets/images/cap.png');
-    this.load.image('shoot', './assets/images/shootBtn.png');
-    this.load.image('bullet', './assets/images/troll.png');
-
+    // подгрузи ассеты здесь
+    this.load.image('logo', 'assets/images/logo.png');
     this.load.onLoadComplete.add(this.assetsLoaded, this);
   }
 
   create() {
-    // добавление спрайтов на игровое поле
-    this.background = this.add.sprite(0, 0, 'background');
-    this.background.height = this.game.height;
-    this.background.width = this.game.width;
 
-    this.input.maxPointers = 2;
-
-    this.trumpLogo = this.add.sprite(this.world.centerX, this.world.centerY, 'trump');
-    this.trumpLogo.scale.setTo(0.5);
-    this.trumpLogo.anchor.setTo(0.5);
   }
 
   update() {
-    this.trumpLogo.angle += 5;
-
-    if (this.fontsReady && this.assetsReady) {
-      this.state.start('Splash');
+    if(this.fontsReady && this.fontsLoaded) {
+      this.game.state.start('Menu');
     }
   }
 

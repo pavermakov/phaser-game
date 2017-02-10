@@ -4,5 +4,5 @@ const h = window.innerHeight * window.devicePixelRatio
 export default {
   gameWidth: w,
   gameHeight: h,
-  localStorageName: 'TrumpVsMexicans'
+  localStorageName: 'Avocado Run'
 }

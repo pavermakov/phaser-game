@@ -3,34 +3,51 @@ import Phaser from 'phaser';
 
 export default class extends Phaser.State {
   init() {
-    this.LEVEL_VELOCITY = 220;
-    this.WALL_SPAWN_POINTS = [
-      { x: 50, y: -20 },
-      { x: this.game.world.centerX, y: -20 },
-      { x: this.game.world.width - 50, y: -20 }
-    ];
-    this.PREV_WALL_SPAWN_POINT = 0;
-    this.PLAYER_SPAWN_POINTS = [
-      { x: 50, y: this.game.world.height - 25 },
-      { x: this.game.world.centerX, y: this.game.world.height - 25 },
-      { x: this.game.world.width - 50, y: this.game.world.height - 25 }
-    ];
-    this.CURRENT_PLAYER_POINT = 1;
-    this.IS_INPUT_DOWN = false;
-    this.GAME_OVER = false;
-    this.SCORE = 0;
-    this.TEXT_STYLE = {
-      font: '30px Arial',
-      fill: '#fff'
+    this.gameData = {
+      gameVelocity: 320,
+      wallSpawnPoints: [
+        { x: 50, y: -20 },
+        { x: this.game.world.centerX, y: -20 },
+        { x: this.game.world.width - 50, y: -20 },
+      ],
+      playerSpawnPoints: [
+        { x: 50, y: this.game.world.height - 25 },
+        { x: this.game.world.centerX, y: this.game.world.height - 25 },
+        { x: this.game.world.width - 50, y: this.game.world.height - 25 },
+      ],
+      currentPlayerPoint: 1,
+      isInputDown: false,
+      isGameOver: false,
+      score: 0,
+      textStyle: {
+        font: '30px Arial',
+        fill: '#fff',
+      },
+      totalAvocados: localStorage.getItem('totalAvocados') || 0,
+      lastPlayed: localStorage.getItem('lastPlayed'),
     };
+
+    const now = new Date();
+    const dayNow = now.getDay();
+    const monthNow = now.getMonth();
+
+    if(!this.gameData.lastPlayed) {
+      localStorage.setItem('lastPlayed', JSON.stringify({ day: dayNow, month: monthNow }));
+    } else {
+      const { dayParsed, monthParsed } = JSON.parse(this.gameData.lastPlayed);
+
+      if(dayNow !== dayParsed || monthNow !== monthParsed) {
+        localStorage.setItem('totalAvocados', 0);
+      }
+    }
   }
 
   create() {
     this.background = this.game.add.tileSprite(0, 0, this.game.world.width, this.game.world.height, 'background');
-    this.background.autoScroll(0, this.LEVEL_VELOCITY);
+    this.background.autoScroll(0, this.gameData.gameVelocity);
 
     // игрок
-    this.player = this.game.add.sprite(this.PLAYER_SPAWN_POINTS[this.CURRENT_PLAYER_POINT].x, this.PLAYER_SPAWN_POINTS[this.CURRENT_PLAYER_POINT].y, 'avocado');
+    this.player = this.game.add.sprite(this.gameData.playerSpawnPoints[this.gameData.currentPlayerPoint].x, this.gameData.playerSpawnPoints[this.gameData.currentPlayerPoint].y, 'avocado');
     this.player.anchor.setTo(0.5);
     this.game.physics.arcade.enable(this.player);
     this.player.body.collideWorldBounds = true;
@@ -50,26 +67,28 @@ export default class extends Phaser.State {
   update() {
     this.game.physics.arcade.overlap(this.player, this.walls, this._handleOverlap, null, this);
 
-    if(this.game.input.activePointer.isDown && !this.IS_INPUT_DOWN && !this.GAME_OVER) {
+    // управление
+    if(this.game.input.activePointer.isDown && !this.gameData.isInputDown && !this.gameData.isGameOver) {
       var targetX = this.game.input.activePointer.position.x;
 
-      if(targetX > this.PLAYER_SPAWN_POINTS[this.CURRENT_PLAYER_POINT].x && this.CURRENT_PLAYER_POINT < 2) {
-        this.CURRENT_PLAYER_POINT++;
-      } else if(targetX < this.PLAYER_SPAWN_POINTS[this.CURRENT_PLAYER_POINT].x && this.CURRENT_PLAYER_POINT > 0) {
-        this.CURRENT_PLAYER_POINT--;
+      if(targetX > this.gameData.playerSpawnPoints[this.gameData.currentPlayerPoint].x && this.gameData.currentPlayerPoint < 2) {
+        this.gameData.currentPlayerPoint++;
+      } else if(targetX < this.gameData.playerSpawnPoints[this.gameData.currentPlayerPoint].x && this.gameData.currentPlayerPoint > 0) {
+        this.gameData.currentPlayerPoint--;
       }
 
-      this.player.position.x = this.PLAYER_SPAWN_POINTS[this.CURRENT_PLAYER_POINT].x;
-      this.IS_INPUT_DOWN = true;
+      this.game.add.tween(this.player).to({ x: this.gameData.playerSpawnPoints[this.gameData.currentPlayerPoint].x}, 70, 'Back.easeOut', true);
+      // this.player.position.x = this.gameData.playerSpawnPoints[this.gameData.currentPlayerPoint].x;
+      this.gameData.isInputDown = true;
     }
 
-    if(this.game.input.activePointer.isUp && !this.GAME_OVER) {
-      this.IS_INPUT_DOWN = false;
+    if(this.game.input.activePointer.isUp && !this.gameData.isGameOver) {
+      this.gameData.isInputDown = false;
     }
   }
 
   _createWall() {
-    let spawnSpot = this.game.rnd.pick(this.WALL_SPAWN_POINTS);
+    let spawnSpot = this.game.rnd.pick(this.gameData.wallSpawnPoints);
 
     let wall = this.walls.getFirstExists(false);
 
@@ -80,13 +99,13 @@ export default class extends Phaser.State {
     }
 
     wall.anchor.setTo(0.5);
+    wall.body.velocity.y = this.gameData.gameVelocity;
     wall.checkWorldBounds = true;
-    wall.body.velocity.y = this.LEVEL_VELOCITY + 70;
     wall.events.onOutOfBounds.add(this._destroyWall, this);
   }
 
   _destroyWall(wall) {
-    this.SCORE++;
+    this.gameData.score++;
     wall.kill();
   }
 
@@ -97,35 +116,49 @@ export default class extends Phaser.State {
   }
 
   _levelUp() {
-    this.wallTimer.delay *= 0.9;
+    if(this.walls.children.length < 6) {
+      this.wallTimer.delay *= 0.8;
+      this.gameData.gameVelocity *= 1.1;
+    } else {
+      this.wallTimer.delay *= 0.6;
+      this.gameData.gameVelocity *= 1.3;
+    }
 
-    // this.LEVEL_VELOCITY *= 1.10;
-    // this.walls.setAll('body.velocity.y', this.LEVEL_VELOCITY);
+    this.walls.setAll('body.velocity.y', this.gameData.gameVelocity);
+    this.background.autoScroll(0, this.gameData.gameVelocity);
   }
 
   _gameOver() {
-    this.GAME_OVER = true;
+    this.gameData.isGameOver = true;
+    this.game.camera.shake(0.015, 150);
     this.game.time.events.removeAll();
+    this.background.autoScroll(0);
     this.walls.setAll('body.enable', false);
 
+    localStorage.setItem('totalAvocados', ++this.gameData.totalAvocados);
+
     const bmd = this.game.add.bitmapData(this.game.world.width, this.game.world.height);
-    bmd.ctx.fillStyle = "black";
-    bmd.ctx.fillRect(0, 0, this.game.world.width,this.game.world.height);
+    bmd.fill(0, 0, 0, 0.7);
 
-    const overlay = this.game.add.sprite(0, 0, bmd);
-    overlay.alpha = 0.8;
-
-    // this.game.add.tween(this).to({y:0}, 1000, Phaser.Easing.Bounce.Out, true);
-
-    const gameOverText = this.game.add.text(this.game.world.centerX, this.game.world.centerY - 40, 'GAME OVER', this.TEXT_STYLE);
+    const gameOverText = this.game.make.text(this.game.world.centerX, this.game.world.centerY - 40, 'GAME OVER', this.gameData.textStyle);
     gameOverText.anchor.setTo(0.5);
+    bmd.draw(gameOverText);
 
-    const scoreText = this.game.add.text(this.game.world.centerX, this.game.world.centerY, `YOUR SCORE: ${this.SCORE}`, this.TEXT_STYLE);
+    const scoreText = this.game.make.text(this.game.world.centerX, this.game.world.centerY, `YOUR SCORE: ${this.gameData.score}`, this.gameData.textStyle);
     scoreText.anchor.setTo(0.5);
+    bmd.draw(scoreText);
 
-    const playAgainText = this.game.add.text(this.game.world.centerX, this.game.world.centerY + 40, 'TAP TO PLAY AGAIN', this.TEXT_STYLE);
+    const playAgainText = this.game.make.text(this.game.world.centerX, this.game.world.centerY + 40, 'TAP TO PLAY AGAIN', this.gameData.textStyle);
     playAgainText.anchor.setTo(0.5);
+    bmd.draw(playAgainText);
 
-    this.game.input.onDown.addOnce(() => this.game.state.start('Game'), this);
+    const overlay = this.game.add.sprite(0, -this.game.world.height, bmd);
+
+    this.game.add.tween(overlay).to({y: 0}, 1000, Phaser.Easing.Bounce.Out, true);
+
+    this.game.time.events.add(Phaser.Timer.SECOND, () => {
+      this.game.input.onDown.addOnce(() => this.game.state.start('Game'), this);
+    }, this);
+
   }
 }
